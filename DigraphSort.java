@@ -259,11 +259,3 @@ class Node {
 		System.out.print("Depth = "+_depth);
 	}
 }
-
-class StratumCompare implements Comparator<Node> {
-    @Override
-    public int compare(Node o1, Node o2) {
-        // write comparison logic here like below , it's just a sample
-        return new Integer(o1.getDepth()).compareTo(new Integer(o2.getDepth()));
-    }
-}
