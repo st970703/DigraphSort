@@ -17,19 +17,11 @@ public class DigraphSort {
 	public static void main(String[] args) {
 
 		storeNodes();
-
-		testHM(0);
-	
-		//testG2D();
 		
 		calcDepth();
-		System.out.println("Calculated depths:");
-		testHM(1);
 		
-		testSort();
+		sortOutput();
 		
-		testHM(1);
-		//sortOutput();
 		printOutput();
 	}
 	
@@ -51,8 +43,7 @@ public class DigraphSort {
 		}		
 	}
 	
-	private static void testSort() {
-		System.out.println("testSort():");
+	private static void sortOutput() {
 		// not yet sorted
 	    List<Node> StratumByDepth = new ArrayList<Node>(_nodeHM.values());
 
@@ -66,8 +57,6 @@ public class DigraphSort {
 
 	    int currentDepth = -1;
 	    for (Node n : StratumByDepth) {
-	    	System.out.print("node = "); n.printValue(); System.out.print("\t"); n.printDepth();
-	    	System.out.println();
 	    	if (n.getDepth() != currentDepth) {
 	    		currentDepth = n.getDepth();
 	    		_nodeOutput.add(new ArrayList<Integer>());
@@ -82,19 +71,6 @@ public class DigraphSort {
 	    }
 	}
 	
-	/*private static void sortOutput() {
-		
-		Set<Integer> keyset= _nodeHM.keySet();
-		for (Integer key : keyset) {
-			Node temp = _nodeHM.get(key);
-			Integer value = temp.getValue();
-			int depth = temp.getDepth();
-			if (!_nodeOutput.get(depth).contains(value)) {
-				_nodeOutput.get(depth).add(value);
-			}
-		}
-	}*/
-	
 	private static void calcDepth() {
 		Set<Integer> keyset= _nodeHM.keySet();
 		for (Integer key : keyset) {
@@ -102,17 +78,6 @@ public class DigraphSort {
 			temp.setDepth(G2DSort(temp));
 		}
 	}
-	
-	/*public static void testG2D() {
-		System.out.println("Inside testG2D(): ");
-		Set<Integer> keyset= _nodeHM.keySet();
-		for (Integer key : keyset) {
-			Node temp = _nodeHM.get(key);
-			System.out.println("Using key = "+key);
-			System.out.println("G2DSort("+temp.toString()+") = "+ G2DSort(temp));
-		}
-		
-	}*/
 	
 	private static int G2DSort(Node x) {
 		// if x.flag is set
