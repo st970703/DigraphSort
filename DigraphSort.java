@@ -95,6 +95,9 @@ public class DigraphSort {
 		for (Integer key : keyset) {
 			Node temp = _nodeHM.get(key);
 
+			//test
+			//System.out.println(temp.getValue()+".setDepth("+G2DSort(temp)+");");
+			G2DSort(temp);
 			temp.setDepth(G2DSort(temp));
 			if (temp.isStrongComponent()) {
 				ArrayList<Integer> tempCycleList = temp.getCycleNodesAsInt();
@@ -148,6 +151,7 @@ public class DigraphSort {
 					} else {
 						// remove reflexive arc
 						iie.getNode().removeReflexiveArc();
+						x.removeReflexiveArc();
 						// goto line 5, don't touch the flag
 						gotoFlag = true; 
 					}
@@ -155,7 +159,7 @@ public class DigraphSort {
 			}
 		}		
 		x.removeFlag();
-		//gotoFlag = false;
+		gotoFlag = false;
 		return max+1;
 	}
 
@@ -355,9 +359,9 @@ class Node {
 				}
 			}
 		}
-/*		if (mergedNode.getDepth() > _depth) {
+		if (mergedNode.getDepth() > _depth) {
 			_depth = mergedNode.getDepth();
-		}*/
+		}
 		mergedNode.removeFlag();
 	}
 	
