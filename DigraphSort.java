@@ -7,93 +7,158 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class DigraphSort {
 	private static ArrayList<Integer> _nodeLog = new ArrayList<Integer>();
 	private static HashMap<Integer, Node> _nodeHM = new HashMap<Integer, Node>();
+	private static HashMap<Integer, ArrayList<Node>> _nodeOutput = new HashMap<Integer, ArrayList<Node>>();
+	private static boolean gotoFlag = true;
+	private static GraphType _graphType = GraphType.DAG;
 	
-	private static ArrayList<ArrayList<Integer>> _nodeOutput = new ArrayList<ArrayList<Integer>>();
-
 	public static void main(String[] args) {
 
 		storeNodes();
-		
+
 		calcDepth();
-		
+
 		sortOutput();
 		
 		printOutput();
 	}
-	
+
 	private static void printOutput() {
-		System.out.println("DAG");
-		System.out.println(_nodeOutput.size());
-		for (int i = 0; i < _nodeOutput.size(); i++) {
-			ArrayList<Integer> temp = _nodeOutput.get(i);
-			for (int j = 0; j < temp.size(); j++) {
-				if (j == 0) {
-					System.out.println(temp.size());
-				}
-				if (i == _nodeOutput.size()-1 && j == temp.size()-1) {
-					System.out.print(temp.get(j));
+		System.out.println(_graphType);
+		List<Integer> keyList = new ArrayList<Integer>(_nodeOutput.keySet());
+		Collections.sort(keyList);
+		System.out.println(keyList.size());
+		for (int i = 0; i < keyList.size(); i++) {
+			ArrayList<Node> tempAL = _nodeOutput.get(new Integer(keyList.get(i)));
+			System.out.println(tempAL.size());
+			for (int n = 0; n < tempAL.size(); n++) {
+				if (tempAL.get(n).isStrongComponent()) {
+					ArrayList<Integer> temp = new ArrayList<Integer>(tempAL.get(n).getCycleNodesAsInt());
+					temp.add(tempAL.get(n).getValue());
+					Collections.sort(temp);
+					StringBuilder tempString = new StringBuilder(); 
+					for (int j = 0; j < temp.size(); j++) {
+						tempString.append(temp.get(j).toString());
+						if (j != temp.size()-1) {
+							tempString.append(" ");
+						}
+					}
+
+					System.out.print(tempString);
 				} else {
-					System.out.println(temp.get(j));
+					System.out.print(tempAL.get(n).getValue());
+				}
+				if (i == keyList.size()-1 && n == tempAL.size()-1) {
+				} else {
+					System.out.println();
 				}
 			}
-		}		
+		}
 	}
-	
-	private static void sortOutput() {
+
+	private static void sortOutput() {		
 		// not yet sorted
-	    List<Node> StratumByDepth = new ArrayList<Node>(_nodeHM.values());
+		List<Node> StratumByDepth = new ArrayList<Node>(_nodeHM.values());
 
-	    Collections.sort(StratumByDepth, new Comparator<Node>() {
-	    	@ Override
-	    	public int compare(Node o1, Node o2) {
-	            // write comparison logic here like below , it's just a sample
-	            return new Integer(o1.getDepth()).compareTo(new Integer(o2.getDepth()));
-	        }
-	    });
+		Collections.sort(StratumByDepth, new Comparator<Node>() {
+			@ Override
+			public int compare(Node o1, Node o2) {
 
-	    int currentDepth = -1;
-	    for (Node n : StratumByDepth) {
-	    	if (n.getDepth() != currentDepth) {
-	    		currentDepth = n.getDepth();
-	    		_nodeOutput.add(new ArrayList<Integer>());
-	    		_nodeOutput.get(currentDepth).add(n.getValue());
-	    	} else if (n.getDepth() == currentDepth) {
-	    		_nodeOutput.get(currentDepth).add(n.getValue());
-	    	}
-	    }
-	    // sort the ArrayList of ArrayList
-	    for (ArrayList<Integer> i : _nodeOutput) {
-	    	Collections.sort(i);
-	    }
+				return new Integer(o1.getDepth()).compareTo(new Integer(o2.getDepth()));
+			}
+		});
+		
+		for (Node n : StratumByDepth) {
+			int depth = n.getDepth();
+			if (_nodeOutput.get(depth) == null) {
+				_nodeOutput.put(depth, new ArrayList<Node>() );			
+			} 
+			_nodeOutput.get(depth).add(n);
+			
+			Collections.sort(_nodeOutput.get(depth), new Comparator<Node>() {
+				@ Override
+				public int compare(Node o1, Node o2) {
+
+					return new Integer(o1.getValue()).compareTo(new Integer(o2.getValue()));
+				}
+			});
+		}
 	}
-	
+
 	private static void calcDepth() {
+		ArrayList<Integer> keyToRemove = new ArrayList<Integer>(); 
 		Set<Integer> keyset= _nodeHM.keySet();
 		for (Integer key : keyset) {
 			Node temp = _nodeHM.get(key);
+
 			temp.setDepth(G2DSort(temp));
-		}
-	}
-	
-	private static int G2DSort(Node x) {
-		// if x.flag is set
-		int max = -1;
-		ArrayList<Node> y = x.getPredecessor();
-		for (Node i : y) {
-			int tmp = G2DSort(i);
-			if (tmp > max) {
-				max = tmp;
+			if (temp.isStrongComponent()) {
+				ArrayList<Integer> tempCycleList = temp.getCycleNodesAsInt();
+				for(Integer i : tempCycleList) {
+					keyToRemove.add(i);
+				}
 			}
 		}
-		
-		//remove x.flag
+		for (Integer i : keyToRemove) {
+			_nodeHM.remove(i);
+		}
+	}
+
+	private static int G2DSort(Node x) throws InvalidInputException {
+		if (x.getFlag() == true) {
+			_graphType = GraphType.nonDAG;
+			throw new InvalidInputException(x);
+		} 
+		// set x.flag
+		x.setFlag();
+		 
+		int max = -1;
+		// goto control
+		gotoFlag = true;
+		while (gotoFlag == true ) {
+
+			ArrayList<Node> y = x.getPredecessor();
+			if (y.isEmpty()) {
+				break;
+			} 
+			for (int i = 0; i < y.size(); i++) {
+				try {
+					//gotoFlag = true;
+					int tmp = G2DSort(y.get(i));
+					if (tmp > max) {
+						max = tmp;
+					}
+
+					//i = -1;
+					//if no exceptions, don't "goto"
+					gotoFlag = false;
+				} catch (InvalidInputException iie) {
+					Node xc = iie.getNode();
+					if (x.getValue() != xc.getValue() ) {
+						// merge x into xc
+						xc.merge(x);
+
+						//_process.clear();
+						gotoFlag = false;
+						throw new InvalidInputException(xc);
+					} else {
+						// remove reflexive arc
+						iie.getNode().removeReflexiveArc();
+						// goto line 5, don't touch the flag
+						gotoFlag = true; 
+					}
+				}
+			}
+		}		
+		x.removeFlag();
+		//gotoFlag = false;
 		return max+1;
 	}
-	
+
 	private static void testHM(int mode){
 		if (mode == 0) {
 			//test
@@ -108,7 +173,13 @@ public class DigraphSort {
 			System.out.println("Key set values are: " + keyset);	
 			for (Integer key : keyset) {
 				Node temp = _nodeHM.get(key);
-				System.out.print("Value = "); temp.printValue(); System.out.println();
+				System.out.print("\nValue = "); temp.printValue(); System.out.println();
+				System.out.print("Strong Compornent = "+temp.isStrongComponent());System.out.println();
+				if (temp.isStrongComponent()) {
+					System.out.print("Cycles = "+temp.getCycleNodesAsInt());System.out.println();
+					System.out.println("getMinCycleNode() = "+temp.getMinCycleNode());
+				}
+
 				temp.printPredecessor(); System.out.println();
 				temp.printSucessor(); System.out.println();
 				temp.printDepth(); System.out.println();
@@ -125,23 +196,23 @@ public class DigraphSort {
 				temp.printDepth(); System.out.println();
 			}
 		}
-		
+
 	}
 
 	private static void storeNodes() {
 		BufferedReader br = null;
-		
+
 		br = new BufferedReader(new InputStreamReader(System.in));
-		
+
 		try {
 			String input = br.readLine();
 			int totalArcs = Integer.parseInt(input);
-			
+
 			for (int i = 0; i < totalArcs; i++) {
 				input = br.readLine();
 				if (input != null && input != "" ) {
 					String[] splitArray = input.split(" ");
-					
+
 					// make the nodes first
 					Node temp;
 					if (!_nodeLog.contains(new Integer(splitArray[0]) ) ) {
@@ -170,45 +241,148 @@ class Node {
 	private int _value;
 	private ArrayList<Node> _predecessor = new ArrayList<Node>();
 	private ArrayList<Node> _sucessor = new ArrayList<Node>();
+	private ArrayList<Node> _cycleNodes;
 	private int _depth = -1;
-	private boolean _flag;
+	private boolean _flag = false;
 	private boolean _done;
 
 	// Overloading Constructors
 	public Node(int value) {
 		_value = value;
 	}
-	
+
 	public Node(Node predecessor, int value) {
 		_value = value;
 		_predecessor.add(predecessor);
 	}
-	
+
 	public Node(int value, Node sucessor) {
 		_value = value;
 		_sucessor.add(sucessor);
 	}
-	
+
 	public Node(Node predecessor, int value, Node sucessor) {
 		_value = value;
 		_predecessor.add(predecessor);
 		_sucessor.add(sucessor);
 	}
+	
+	public boolean isStrongComponent() {
+		if (_cycleNodes != null) {
+			return true;
+		}
+		return false;
+	}
+	
+	public ArrayList<Integer> getCycleNodesAsInt() {
+		ArrayList<Integer> temp = new ArrayList<Integer>();
+		for (Node i : this._cycleNodes ) {
+			Integer tempInt = new Integer(i.getValue());
+			if (!temp.contains(tempInt) ) {
+				temp.add(tempInt);
+			}
+		}
+		Collections.sort(temp);
+		return temp;
+	}
+	
+	public ArrayList<Integer> getPredecessorsAsInt() {
+		ArrayList<Integer> temp = new ArrayList<Integer>();
+		for (Node i : this._predecessor ) {
+			Integer tempInt = new Integer(i.getValue());
+			if (!temp.contains(tempInt) ) {
+				temp.add(tempInt);
+			}
+		}
+		Collections.sort(temp);
+		return temp;
+	}
 
+	public boolean equals(Node xc) { 
+		ArrayList<Integer> xc_Predecessors = xc.getPredecessorsAsInt();
+		ArrayList<Integer> this_Predecessors = this.getPredecessorsAsInt();
+		
+	    Collections.sort(xc_Predecessors);
+	    Collections.sort(this_Predecessors);      
+	    return xc_Predecessors.equals(this_Predecessors);
+	}
+
+	public void merge(Node mergedNode) {
+		ArrayList<Node> merged_predecessor = mergedNode.getPredecessor();
+		ArrayList<Node> merged_sucessor = mergedNode.getSucessor();
+
+		for (int j = 0; j < merged_predecessor.size(); j++) {
+			Node temp = merged_predecessor.get(j);
+			if (!this._predecessor.contains(temp)) {
+				this._predecessor.add(temp);
+			}
+			merged_predecessor.remove(temp);
+			j = -1;
+		}
+		for (int j = 0; j < merged_sucessor.size(); j++) {
+			Node temp = merged_sucessor.get(j);
+			if (!this._sucessor.contains(temp)) {
+				this._sucessor.add(temp);
+			}
+			ArrayList<Node> reverseList = temp.getPredecessor();
+			for (int k = 0; k < reverseList.size(); k++) {
+				Node tempReverse = reverseList.get(k);
+				if (tempReverse.getValue() == mergedNode.getValue()) {
+					reverseList.remove(tempReverse);
+					k = -1;
+					if (!reverseList.contains(this)) {
+						reverseList.add(this);
+					}
+				}
+			}
+			merged_sucessor.remove(temp);
+			j = -1;
+		}
+
+		// add to cycle list
+		if (this._cycleNodes == null) {
+			_cycleNodes = new ArrayList<Node>();
+		}
+		if (!this._cycleNodes.contains(mergedNode)) {
+			this._cycleNodes.add(mergedNode);
+		}
+		if (mergedNode.isStrongComponent()) {
+			ArrayList<Node> temp = mergedNode.getCycleNodes();
+			for (int i = 0; i < temp.size(); i++) {
+				Node tempNode = temp.get(i);
+				if (!this._cycleNodes.contains(tempNode)) {
+					this._cycleNodes.add(tempNode);
+				}
+			}
+		}
+/*		if (mergedNode.getDepth() > _depth) {
+			_depth = mergedNode.getDepth();
+		}*/
+		mergedNode.removeFlag();
+	}
+	
 	// adder methods
 	public void addPredecessor(Node previous) {
 		_predecessor.add(previous);
 	}
-	
+
 	public void addSucessor(Node next) {
 		_sucessor.add(next);
 	}
-	
+
 	// getter methods
+	public int getMinCycleNode() {
+		int minFromCycleNodeList =  Collections.min(this.getCycleNodesAsInt());
+		return Math.min(minFromCycleNodeList, this.getValue());
+	}
+	public ArrayList<Node> getCycleNodes() {
+		return _cycleNodes;
+	}
+	
 	public ArrayList<Node> getPredecessor() {
 		return _predecessor;
 	}
-	
+
 	public ArrayList<Node> getSucessor() {
 		return _sucessor;
 	}
@@ -218,19 +392,37 @@ class Node {
 	public int getValue() {
 		return _value;
 	}
-	
+
+	public boolean getFlag() {
+		return _flag;
+	}
+
 	// private helper method
 	private void updateDepth(int newD) {
 		if (newD > _depth) {
 			_depth = newD;
 		}
 	}
-	
+
 	// setter methods
 	public void setDepth(int depth) {
 		_depth = depth;
 	}
-	
+	public void setFlag() {
+		_flag = true;
+	}
+	public void removeFlag() {
+		_flag = false;
+	}
+	public void removeReflexiveArc() {
+		if (_predecessor.contains(this) ) {
+			_predecessor.remove(this);
+		}
+		if (_sucessor.contains(this) ) {
+			_sucessor.remove(this);
+		}
+	}
+
 	//test
 	public void printValue() {
 		System.out.print(_value);
@@ -258,4 +450,27 @@ class Node {
 	public void printDepth() {
 		System.out.print("Depth = "+_depth);
 	}
+	
+	//Edited by Darius
+	public String toString(){
+		return String.valueOf(_value);
+	}
+}
+
+@SuppressWarnings("serial")
+class InvalidInputException extends IllegalArgumentException {
+	private Node _cycle;
+	String message = "nonDAG";
+	public InvalidInputException(Node n) {
+		_cycle = n;
+	}
+	public Node getNode() {
+		return _cycle;
+	}
+	public String getMessage() {
+		return message;
+	}
+}
+enum GraphType {
+	DAG, nonDAG
 }
