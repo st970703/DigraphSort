@@ -23,8 +23,6 @@ public class DigraphSort {
 
 		sortOutput();
 		
-		
-		testHM(0);
 		printOutput();
 	}
 
@@ -100,13 +98,9 @@ public class DigraphSort {
 		for (Integer key : keyset) {
 			Node temp = _nodeHM.get(key);
 
-			//test
-			//System.out.println(temp.getValue()+".setDepth("+G2DSort(temp)+");");
-			//G2DSort(temp);
 			int tempDepth = G2DSort(temp);
 			temp.setDepth(tempDepth);
-			//test
-			System.out.println(_nodeHM.get(key)+".get(key).setDepth(G2DSort(temp));"); testHM(1);
+			
 			if (temp.isStrongComponent()) {
 				ArrayList<Integer> tempCycleList = temp.getCycleNodesAsInt();
 				for(Integer i : tempCycleList) {
@@ -166,8 +160,6 @@ public class DigraphSort {
 				} catch (InvalidInputException iie) {
 					Node xc = iie.getNode();
 					if (!x.toString().equals(xc.toString()) ) {
-						//test
-						System.out.println("merge "+x+" into "+xc);
 						// merge x into xc
 						xc.merge(x);
 
@@ -175,7 +167,6 @@ public class DigraphSort {
 
 						throw new InvalidInputException(xc);
 					} else {
-						System.out.println("iie.getNode().removeReflexiveArc();");
 						// remove reflexive arc
 						iie.getNode().removeReflexiveArc();
 						// goto line 5, don't touch the flag
@@ -350,20 +341,6 @@ class Node {
 		
 		ArrayList<Node> merged_predecessor = mergedNode.getPredecessor();
 		ArrayList<Node> merged_sucessor = mergedNode.getSucessor();
-		
-		//test
-		for (int j = 0; j < merged_predecessor.size(); j++) {
-			Node temp = merged_predecessor.get(j);
-			if (temp.getIsRemoved()) {
-				System.out.println("line 335: try to merge "+temp.getValue()+" inside "+_value+" getIsRemoved() depth = "+temp.getIsRemoved()+" merged_predecessor = "+merged_predecessor);
-			}
-		}
-		for (int j = 0; j < merged_sucessor.size(); j++) {
-			Node temp = merged_sucessor.get(j);
-			if (temp.getIsRemoved()) {
-				System.out.println("line 341: try to merge "+temp.getValue()+" inside "+_value+" getIsRemoved() depth = "+temp.getIsRemoved()+" merged_sucessor = "+merged_sucessor);
-			}
-		}
 
 		for (int j = 0; j < merged_predecessor.size(); j++) {
 			Node temp = merged_predecessor.get(j);
